@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101522">
+  <title>深窟探險｜三層回合制地下城</title>
+  <style>
+    @property --rainbow-hue {
+      syntax: "<angle>";
+      inherits: true;
+      initial-value: 0deg;
+    }
+    :root {
+      color-scheme: dark;
+      --bg: #0c101a;
+      --panel: #151c2a;
+      --panel-2: #1b2536;
+      --line: #2b3850;
+      --text: #edf4ff;
+      --muted: #9cabc3;
+      --cyan: #75e6e0;
+      --red: #ff7b85;
+      --gold: #ffd47a;
+      --green: #8ff0ad;
+    }
+    * { box-sizing: border-box; }
+    html { min-height: 100%; background: var(--bg); }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      padding: 22px 14px calc(28px + env(safe-area-inset-bottom));
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(ellipse at 50% 0%, #1b2940 0%, var(--bg) 58%);
+    }
+    button { font: inherit; touch-action: manipulation; }
+    .app {
+      width: min(100%, 760px);
+      margin: 0 auto;
+      --rainbow-hue: 0deg;
+      animation: rainbow-cycle 3.2s linear infinite;
+    }
+    @keyframes rainbow-cycle {
+      from { --rainbow-hue: 0deg; }
+      to { --rainbow-hue: 360deg; }
+    }
+    header { text-align: center; margin: 0 auto 18px; }
+    .eyebrow {
+      margin: 0 0 6px;
+      color: var(--cyan);
+      font-size: .75rem;
+      font-weight: 800;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+    }
+    h1 { margin: 0; font-size: clamp(1.65rem, 5vw, 2.35rem); letter-spacing: .04em; }
+    .subtitle { margin: 8px 0 0; color: var(--muted); font-size: .95rem; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+    .panel {
+      min-width: 0;
+      padding: clamp(13px, 3vw, 21px);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: linear-gradient(145deg, rgba(25, 34, 51, .97), rgba(16, 22, 34, .98));
+      box-shadow: 0 18px 50px rgba(0, 0, 0, .22);
+    }
+    .hud { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 14px; }
+    .stat { padding: 10px 8px; border: 1px solid var(--line); border-radius: 12px; background: #101725; text-align: center; }
+    .stat-label { color: var(--muted); font-size: .74rem; }
+    .stat-value { margin-top: 4px; font-size: 1.05rem; font-weight: 800; white-space: nowrap; }
+    #health { color: var(--red); letter-spacing: .08em; }
+    #enemy-count { color: var(--gold); }
+    .board-wrap { padding: 8px; border-radius: 13px; background: #080d15; border: 1px solid #263148; }
+    #board {
+      display: grid;
+      grid-template-columns: repeat(15, minmax(0, 1fr));
+      gap: clamp(2px, .65vw, 4px);
+      width: 100%;
+      max-width: 560px;
+      margin: 0 auto;
+      user-select: none;
+    }
+    .tile {
+      display: grid;
+      place-items: center;
+      min-width: 0;
+      aspect-ratio: 1;
+      border-radius: 4px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: clamp(.68rem, 2.6vw, 1.15rem);
+      font-weight: 900;
+      line-height: 1;
+    }
+    .tile.floor { color: #34445d; background: #111a28; }
+    .tile.wall { color: #a3b5cf; background: #29364b; box-shadow: inset 0 0 0 1px #34445b; }
+    .tile.player {
+      color: #07171b;
+      background: #ff4d6d;
+      background: hsl(var(--rainbow-hue) 95% 65%);
+      box-shadow: 0 0 15px hsl(var(--rainbow-hue) 95% 65% / .55);
+    }
+    .tile.enemy { color: #291015; background: var(--red); box-shadow: 0 0 12px rgba(255, 123, 133, .25); }
+    .tile.fountain { color: #062436; background: #75dfff; box-shadow: 0 0 14px rgba(117, 223, 255, .5); }
+    .tile.exit { color: #082214; background: var(--green); box-shadow: 0 0 13px rgba(143, 240, 173, .24); }
+    .legend { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px 15px; margin: 13px 0 0; color: var(--muted); font-size: .78rem; }
+    .legend span { white-space: nowrap; }
+    .key { display: inline-grid; place-items: center; min-width: 1.55em; height: 1.55em; margin-right: 4px; border-radius: 4px; color: var(--text); background: #29364b; font-family: ui-monospace, monospace; font-weight: 900; }
+    .message {
+      min-height: 54px;
+      display: flex;
+      align-items: center;
+      margin-top: 14px;
+      padding: 12px 14px;
+      border: 1px solid #2a4352;
+      border-radius: 12px;
+      color: #d7f4f2;
+      background: rgba(20, 49, 56, .45);
+      line-height: 1.5;
+    }
+    .message[data-kind="danger"] { border-color: #70404a; color: #ffc4c9; background: rgba(70, 25, 35, .38); }
+    .message[data-kind="win"] { border-color: #387451; color: #bdffd0; background: rgba(24, 70, 43, .4); }
+    .message[data-kind="heal"] { border-color: #287b9b; color: #bdefff; background: rgba(18, 75, 99, .38); }
+    .message[data-kind="level"] { border-color: #76613a; color: #ffe4a6; background: rgba(77, 57, 20, .38); }
+    .controls-area { display: grid; grid-template-columns: 1fr; gap: 16px; align-items: center; }
+    .instructions h2, .controls h2 { margin: 0 0 9px; font-size: 1rem; }
+    .instructions p { margin: 6px 0; color: var(--muted); font-size: .9rem; line-height: 1.65; }
+    .instructions strong { color: var(--text); }
+    .dpad { display: grid; grid-template-columns: repeat(3, 58px); grid-template-rows: repeat(2, 52px); justify-content: center; gap: 7px; }
+    .move-btn {
+      display: grid;
+      place-items: center;
+      min-width: 0;
+      border: 1px solid #41536d;
+      border-radius: 13px;
+      color: var(--text);
+      background: linear-gradient(180deg, #29384e, #1a2537);
+      box-shadow: 0 4px 0 #0b111c;
+      cursor: pointer;
+      font-size: 1.35rem;
+      font-weight: 900;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .move-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #0b111c; }
+    .move-btn:disabled { opacity: .38; cursor: not-allowed; filter: grayscale(.7); box-shadow: none; }
+    .move-btn:focus-visible, .restart:focus-visible { outline: 3px solid var(--cyan); outline-offset: 3px; }
+    .up { grid-column: 2; grid-row: 1; }
+    .left { grid-column: 1; grid-row: 2; }
+    .down { grid-column: 2; grid-row: 2; }
+    .right { grid-column: 3; grid-row: 2; }
+    .control-foot { margin: 11px 0 0; text-align: center; color: var(--muted); font-size: .77rem; }
+    .restart {
+      display: block;
+      width: 100%;
+      margin-top: 15px;
+      padding: 12px 16px;
+      border: 1px solid #4b637d;
+      border-radius: 11px;
+      color: #eaf5ff;
+      background: #263951;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .restart:hover { background: #314966; }
+    .footnote { margin: 14px 0 0; text-align: center; color: #687994; font-size: .75rem; }
+    @media (min-width: 680px) {
+      body { padding-top: 30px; }
+      .layout { grid-template-columns: minmax(0, 1.2fr) minmax(230px, .8fr); align-items: start; }
+      .controls-area { gap: 21px; }
+      .controls { padding-top: 3px; }
+      .dpad { grid-template-columns: repeat(3, 54px); grid-template-rows: repeat(2, 49px); }
+    }
+    @media (max-width: 380px) {
+      body { padding-inline: 9px; }
+      .panel { padding: 11px; }
+      .board-wrap { padding: 5px; }
+      .legend { gap: 7px 10px; }
+      .hud { gap: 4px; }
+      .stat { padding: 8px 3px; }
+      .stat-label { font-size: .66rem; }
+      .stat-value { font-size: .78rem; }
+      #health { font-size: .67rem; letter-spacing: 0; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
+      .app { animation: none; --rainbow-hue: 180deg; }
+      .tile.player { background: var(--cyan); box-shadow: 0 0 13px rgba(117, 230, 224, .4); }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <p class="eyebrow">TURN-BASED DUNGEON</p>
+      <h1>深窟探險</h1>
+      <p class="subtitle">闖過三層地下城、喝泉水續命，別讓怪物把你當宵夜。</p>
+    </header>
+
+    <div class="layout">
+      <section class="panel" aria-label="地下城遊戲區">
+        <div class="hud" aria-live="polite">
+          <div class="stat"><div class="stat-label">樓層</div><div class="stat-value" id="floor-count">1 / 3</div></div>
+          <div class="stat"><div class="stat-label">生命值</div><div class="stat-value" id="health">♥ ♥ ♥ ♥ ♥</div></div>
+          <div class="stat"><div class="stat-label">剩餘怪物</div><div class="stat-value" id="enemy-count">3</div></div>
+          <div class="stat"><div class="stat-label">回合</div><div class="stat-value" id="turn-count">0</div></div>
+        </div>
+
+        <div class="board-wrap">
+          <div id="board" role="grid" aria-label="地下城地圖"></div>
+        </div>
+        <div class="legend" aria-label="地圖圖例">
+          <span><b class="key">@</b>玩家</span>
+          <span><b class="key">#</b>牆壁</span>
+          <span><b class="key">E</b>怪物</span>
+          <span><b class="key">H</b>治療泉水</span>
+          <span><b class="key">X</b>出口</span>
+          <span><b class="key">·</b>地板</span>
+        </div>
+        <div id="message" class="message" role="status" aria-live="polite">你醒在地下城深處。找出綠色出口 X！</div>
+      </section>
+
+      <section class="panel controls-area" aria-label="遊戲操作與規則">
+        <div class="instructions">
+          <h2>冒險守則</h2>
+          <p><strong>移動：</strong>鍵盤 WASD、方向鍵，或下方觸控按鈕。</p>
+          <p><strong>牆壁：</strong>撞牆不會移動，也不會消耗回合。</p>
+          <p><strong>怪物：</strong>撞上怪物會損失 1 點生命，怪物不會因此消失；怪物每回合會追來，貼近時也可能攻擊。</p>
+          <p><strong>治療泉水：</strong>踩上藍色 <strong style="color:#75dfff">H</strong> 可恢復至滿血（最多 5 點）；每層限用一次，滿血時不會消耗。</p>
+          <p><strong>目標：</strong>抵達 <strong style="color:var(--green)">X 出口</strong>進入下一層，第三層出口即獲勝。每層怪物更多、迷宮更棘手。生命歸零後只能重新開始；按 <strong>R</strong> 也能重開。</p>
+        </div>
+        <div class="controls">
+          <h2>觸控方向鍵</h2>
+          <div class="dpad" aria-label="觸控方向控制">
+            <button class="move-btn up" type="button" data-dir="up" aria-label="向上移動">▲</button>
+            <button class="move-btn left" type="button" data-dir="left" aria-label="向左移動">◀</button>
+            <button class="move-btn down" type="button" data-dir="down" aria-label="向下移動">▼</button>
+            <button class="move-btn right" type="button" data-dir="right" aria-label="向右移動">▶</button>
+          </div>
+          <p class="control-foot">小撇步：別跟怪物硬碰硬，留意藍色 H，泉水可是冒險家的續命外掛。</p>
+          <button class="restart" id="restart" type="button">↻ 重新開始</button>
+        </div>
+      </section>
+    </div>
+    <p class="footnote">單檔 HTML・無外部套件・桌機與手機皆可遊玩</p>
+  </main>
+
+  <script>
+    (() => {
+      'use strict';
+
+      // 每層都是 15 × 11 的文字地圖：# 牆、@ 起點、E 怪物、H 治療泉水、X 出口、. 地板。
+      // 後續樓層增加怪物數量，也增加牆壁阻隔，難度逐層提升。
+      const LEVELS = [
+        {
+          name: '第一層',
+          map: [
+            '###############',
+            '#@............#',
+            '#.##....##....#',
+            '#...........H.#',
+            '#..###...###..#',
+            '#.....E.......#',
+            '#.##..#..##...#',
+            '#.............#',
+            '#...###.......#',
+            '#E....E......X#',
+            '###############'
+          ]
+        },
+        {
+          name: '第二層',
+          map: [
+            '###############',
+            '#@............#',
+            '#.###..#..###.#',
+            '#....E......H.#',
+            '#.##...#...##.#',
+            '#...E......E..#',
+            '#...##.#.##...#',
+            '#..E..........#',
+            '#..####...###.#',
+            '#....E.......X#',
+            '###############'
+          ]
+        },
+        {
+          name: '第三層',
+          map: [
+            '###############',
+            '#@............#',
+            '#.###.###.###.#',
+            '#...E.........#',
+            '#.###...####..#',
+            '#..E..H..E....#',
+            '#..##.##.##...#',
+            '#....E........#',
+            '#.#####...###.#',
+            '#E...E.....E.X#',
+            '###############'
+          ]
+        }
+      ];
+      const MAX_HP = 5;
+      const DELTAS = {
+        up: { r: -1, c: 0 },
+        down: { r: 1, c: 0 },
+        left: { r: 0, c: -1 },
+        right: { r: 0, c: 1 }
+      };
+      const boardEl = document.getElementById('board');
+      const healthEl = document.getElementById('health');
+      const enemyCountEl = document.getElementById('enemy-count');
+      const turnCountEl = document.getElementById('turn-count');
+      const floorCountEl = document.getElementById('floor-count');
+      const messageEl = document.getElementById('message');
+      const restartBtn = document.getElementById('restart');
+
+      let walls;
+      let player;
+      let enemies;
+      let exit;
+      let fountain;
+      let hp;
+      let turns;
+      let currentLevel;
+      let gameState;
+
+      function keyOf(pos) { return `${pos.r},${pos.c}`; }
+      function samePos(a, b) { return Boolean(a && b && a.r === b.r && a.c === b.c); }
+      function inBounds(pos) {
+        return pos.r >= 0 && pos.r < walls.length &&
+          pos.c >= 0 && pos.c < walls[0].length;
+      }
+      function isWall(pos) { return !inBounds(pos) || walls[pos.r][pos.c] === '#'; }
+      function enemyAt(pos) { return enemies.findIndex(enemy => samePos(enemy, pos)); }
+
+      function setMessage(text, kind = 'normal') {
+        messageEl.textContent = text;
+        messageEl.dataset.kind = kind;
+      }
+
+      function loadLevel(levelIndex) {
+        const map = LEVELS[levelIndex].map;
+        walls = map.map(row => row.split(''));
+        enemies = [];
+        exit = null;
+        player = null;
+        fountain = null;
+
+        for (let r = 0; r < walls.length; r++) {
+          for (let c = 0; c < walls[r].length; c++) {
+            const tile = walls[r][c];
+            if (tile === '@') { player = { r, c }; walls[r][c] = '.'; }
+            else if (tile === 'E') { enemies.push({ r, c }); walls[r][c] = '.'; }
+            else if (tile === 'X') { exit = { r, c }; walls[r][c] = '.'; }
+            else if (tile === 'H') { fountain = { r, c, used: false }; walls[r][c] = '.'; }
+          }
+        }
+      }
+
+      function restartGame() {
+        currentLevel = 0;
+        hp = MAX_HP;
+        turns = 0;
+        gameState = 'playing';
+        loadLevel(currentLevel);
+        setMessage('第一層開始！找到 X 前往下一層；藍色 H 可以恢復滿血。');
+        render();
+      }
+
+      function render() {
+        const fragment = document.createDocumentFragment();
+        for (let r = 0; r < walls.length; r++) {
+          for (let c = 0; c < walls[r].length; c++) {
+            const pos = { r, c };
+            let symbol = '·';
+            let type = 'floor';
+            if (walls[r][c] === '#') { symbol = '#'; type = 'wall'; }
+            else if (samePos(pos, player)) { symbol = '@'; type = 'player'; }
+            else if (enemyAt(pos) !== -1) { symbol = 'E'; type = 'enemy'; }
+            else if (fountain && !fountain.used && samePos(pos, fountain)) { symbol = 'H'; type = 'fountain'; }
+            else if (samePos(pos, exit)) { symbol = 'X'; type = 'exit'; }
+            const tile = document.createElement('div');
+            tile.className = `tile ${type}`;
+            tile.textContent = symbol;
+            tile.setAttribute('role', 'gridcell');
+            const labels = { '#': '牆壁', '@': '彩虹玩家', E: '怪物', H: '治療泉水', X: '出口', '·': '地板' };
+            tile.setAttribute('aria-label', labels[symbol]);
+            fragment.appendChild(tile);
+          }
+        }
+        boardEl.replaceChildren(fragment);
+        healthEl.textContent = `${'♥'.repeat(hp)}${'♡'.repeat(MAX_HP - hp)}`;
+        healthEl.setAttribute('aria-label', `生命值 ${hp}/${MAX_HP}`);
+        enemyCountEl.textContent = String(enemies.length);
+        turnCountEl.textContent = String(turns);
+        floorCountEl.textContent = `${currentLevel + 1} / ${LEVELS.length}`;
+        document.querySelectorAll('[data-dir]').forEach(button => {
+          button.disabled = gameState !== 'playing';
+        });
+      }
+
+      // 從玩家位置做 BFS，讓怪物沿著通道追蹤，不會穿牆。
+      function distanceMapFromPlayer() {
+        const distances = Array.from({ length: walls.length }, () => Array(walls[0].length).fill(Infinity));
+        const queue = [player];
+        distances[player.r][player.c] = 0;
+        let head = 0;
+        while (head < queue.length) {
+          const current = queue[head++];
+          for (const delta of Object.values(DELTAS)) {
+            const next = { r: current.r + delta.r, c: current.c + delta.c };
+            if (isWall(next) || distances[next.r][next.c] !== Infinity) continue;
+            distances[next.r][next.c] = distances[current.r][current.c] + 1;
+            queue.push(next);
+          }
+        }
+        return distances;
+      }
+
+      function enemiesTakeTurn(playerAlreadyHit = false, healedThisTurn = false) {
+        let playerWasHit = playerAlreadyHit;
+        let enemyHitPlayer = false;
+        for (let i = 0; i < enemies.length; i++) {
+          const enemy = enemies[i];
+          const distance = Math.abs(enemy.r - player.r) + Math.abs(enemy.c - player.c);
+          if (distance === 1) {
+            if (!playerWasHit) {
+              hp = Math.max(0, hp - 1);
+              playerWasHit = true;
+              enemyHitPlayer = true;
+            }
+            continue;
+          }
+
+          const distances = distanceMapFromPlayer();
+          const occupied = new Set(enemies.filter((_, index) => index !== i).map(keyOf));
+          let best = enemy;
+          let bestDistance = distances[enemy.r][enemy.c];
+          for (const delta of Object.values(DELTAS)) {
+            const next = { r: enemy.r + delta.r, c: enemy.c + delta.c };
+            if (isWall(next) || occupied.has(keyOf(next)) || samePos(next, player)) continue;
+            const nextDistance = distances[next.r][next.c];
+            if (nextDistance < bestDistance) {
+              best = next;
+              bestDistance = nextDistance;
+            }
+          }
+          enemies[i] = { r: best.r, c: best.c };
+        }
+        if (enemyHitPlayer) {
+          if (hp <= 0) {
+            setMessage('怪物撲了上來！生命值歸零，冒險結束。現在只能按「重新開始」或鍵盤 R。', 'danger');
+          } else if (healedThisTurn) {
+            setMessage(`泉水把你治癒至滿血，但怪物隨即咬中你！目前生命值 ${hp}/${MAX_HP}。`, 'danger');
+          } else {
+            setMessage(`有怪物咬中你！生命值 -1，目前 ${hp}/${MAX_HP}。快想辦法拉開距離！`, 'danger');
+          }
+        }
+      }
+
+      function move(direction) {
+        if (gameState !== 'playing') return;
+        const delta = DELTAS[direction];
+        if (!delta) return;
+        const next = { r: player.r + delta.r, c: player.c + delta.c };
+        if (isWall(next)) {
+          setMessage('咚！是牆。你沒移動，也沒浪費回合。');
+          return;
+        }
+
+        const targetEnemy = enemyAt(next);
+        turns += 1;
+
+        if (targetEnemy !== -1) {
+          // 撞上怪物只會扣 HP；不穿過、不消滅怪物。
+          hp = Math.max(0, hp - 1);
+          if (hp <= 0) {
+            gameState = 'lost';
+            setMessage('你撞上怪物，生命值歸零！冒險結束，現在只能重新開始。', 'danger');
+            render();
+            return;
+          }
+          setMessage(`你撞上怪物！生命值 -1（${hp}/${MAX_HP}），怪物仍擋在前方。`, 'danger');
+          enemiesTakeTurn(true);
+          if (hp <= 0) gameState = 'lost';
+          render();
+          return;
+        }
+
+        player = next;
+        let healedThisTurn = false;
+        if (fountain && !fountain.used && samePos(player, fountain)) {
+          if (hp < MAX_HP) {
+            hp = MAX_HP;
+            fountain.used = true;
+            healedThisTurn = true;
+            setMessage(`咕嚕咕嚕！治療泉水讓生命值恢復至滿血 ${MAX_HP}/${MAX_HP}。本層泉水已用完。`, 'heal');
+          } else {
+            setMessage('你找到治療泉水，但生命值已滿！泉水保留，受傷後還能回來使用。', 'heal');
+          }
+        } else {
+          setMessage('你小心翼翼地前進……');
+        }
+
+        if (samePos(player, exit)) {
+          if (currentLevel < LEVELS.length - 1) {
+            currentLevel += 1;
+            loadLevel(currentLevel);
+            setMessage(`通過出口！進入${LEVELS[currentLevel].name}：怪物變多、迷宮更難了。保住剩餘生命！`, 'level');
+            render();
+            return;
+          }
+          gameState = 'won';
+          setMessage(`你征服了三層地下城！共用 ${turns} 回合，剩下 ${hp}/${MAX_HP} 點生命。傳說級冒險家就是你！`, 'win');
+          render();
+          return;
+        }
+
+        enemiesTakeTurn(false, healedThisTurn);
+        if (hp <= 0) gameState = 'lost';
+        render();
+      }
+
+      document.querySelectorAll('[data-dir]').forEach(button => {
+        button.addEventListener('click', () => move(button.dataset.dir));
+      });
+      restartBtn.addEventListener('click', restartGame);
+
+      document.addEventListener('keydown', event => {
+        if (event.altKey || event.ctrlKey || event.metaKey) return;
+        const key = event.key.toLowerCase();
+        const directions = {
+          w: 'up', arrowup: 'up',
+          s: 'down', arrowdown: 'down',
+          a: 'left', arrowleft: 'left',
+          d: 'right', arrowright: 'right'
+        };
+        if (directions[key]) {
+          event.preventDefault();
+          move(directions[key]);
+        } else if (key === 'r') {
+          restartGame();
+        }
+      });
+
+      restartGame();
+    })();
+  </script>
+</body>
+</html>
