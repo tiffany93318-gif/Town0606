@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#101522">
-  <title>深窟探險｜三層回合制地下城（進階職業種族版）</title>
+  <title>深窟探險｜回合制戰鬥地下城</title>
   <style>
     @property --rainbow-hue {
       syntax: "<angle>";
@@ -13,86 +13,92 @@
     }
     :root {
       color-scheme: dark;
-      --bg: #0c101a;
-      --panel: #151c2a;
-      --panel-2: #1b2536;
-      --line: #2b3850;
-      --text: #edf4ff;
-      --muted: #9cabc3;
-      --cyan: #75e6e0;
-      --red: #ff7b85;
-      --gold: #ffd47a;
-      --green: #8ff0ad;
-      --purple: #b19cd9;
+      --bg: #090d16;
+      --panel: #131b2e;
+      --panel-2: #1a253f;
+      --line: #293956;
+      --text: #f0f5ff;
+      --muted: #8fa2c2;
+      --cyan: #5ce1e6;
+      --red: #ff6b7b;
+      --gold: #ffca42;
+      --green: #4ade80;
+      --purple: #c084fc;
     }
     * { box-sizing: border-box; }
     html { min-height: 100%; background: var(--bg); }
     body {
       min-height: 100vh;
       margin: 0;
-      padding: 22px 14px calc(28px + env(safe-area-inset-bottom));
+      padding: 24px 14px calc(32px + env(safe-area-inset-bottom));
       color: var(--text);
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: radial-gradient(ellipse at 50% 0%, #1b2940 0%, var(--bg) 58%);
+      background: radial-gradient(ellipse at 50% 0%, #17243f 0%, var(--bg) 65%);
     }
-    button { font: inherit; touch-action: manipulation; }
+    button { font: inherit; touch-action: manipulation; cursor: pointer; }
     .app {
       width: min(100%, 820px);
       margin: 0 auto;
       --rainbow-hue: 0deg;
-      animation: rainbow-cycle 3.2s linear infinite;
+      animation: rainbow-cycle 3.5s linear infinite;
     }
     @keyframes rainbow-cycle {
       from { --rainbow-hue: 0deg; }
       to { --rainbow-hue: 360deg; }
     }
-    header { text-align: center; margin: 0 auto 18px; }
+    header { text-align: center; margin: 0 auto 22px; }
     .eyebrow {
       margin: 0 0 6px;
       color: var(--cyan);
       font-size: .75rem;
       font-weight: 800;
-      letter-spacing: .22em;
+      letter-spacing: .25em;
       text-transform: uppercase;
+      text-shadow: 0 0 10px rgba(92, 225, 230, .4);
     }
-    h1 { margin: 0; font-size: clamp(1.65rem, 5vw, 2.35rem); letter-spacing: .04em; }
+    h1 { margin: 0; font-size: clamp(1.8rem, 5vw, 2.5rem); letter-spacing: .05em; font-weight: 900; }
     .subtitle { margin: 8px 0 0; color: var(--muted); font-size: .95rem; }
-    .layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
     .panel {
       min-width: 0;
-      padding: clamp(13px, 3vw, 21px);
+      padding: clamp(16px, 3.5vw, 24px);
       border: 1px solid var(--line);
-      border-radius: 18px;
-      background: linear-gradient(145deg, rgba(25, 34, 51, .97), rgba(16, 22, 34, .98));
-      box-shadow: 0 18px 50px rgba(0, 0, 0, .22);
+      border-radius: 20px;
+      background: linear-gradient(145deg, rgba(21, 30, 48, .96), rgba(13, 19, 32, .98));
+      box-shadow: 0 20px 60px rgba(0, 0, 0, .35), inset 0 1px 0 rgba(255, 255, 255, .05);
+      position: relative;
+      z-index: 2;
     }
     
     /* Setup Screen Styles */
-    .setup-screen h2 { margin-top: 0; font-size: 1.25rem; color: var(--cyan); }
-    .setup-section { margin-bottom: 16px; }
-    .setup-section h3 { font-size: .95rem; margin: 0 0 8px; color: var(--muted); }
-    .options-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+    .setup-screen h2 { margin-top: 0; font-size: 1.25rem; color: var(--cyan); letter-spacing: .03em; }
+    .setup-section { margin-bottom: 18px; }
+    .setup-section h3 { font-size: .95rem; margin: 0 0 10px; color: var(--muted); }
+    .options-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); gap: 10px; }
     .option-card {
-      padding: 10px;
+      padding: 12px;
       border: 1px solid var(--line);
-      border-radius: 12px;
-      background: #101725;
+      border-radius: 14px;
+      background: #111827;
       cursor: pointer;
       text-align: left;
-      transition: all 0.2s;
+      transition: all 0.2s ease;
+      user-select: none;
+      position: relative;
+      z-index: 3;
     }
-    .option-card:hover { border-color: var(--cyan); background: #1a263a; }
-    .option-card.selected { border-color: var(--cyan); background: #1e3048; box-shadow: 0 0 12px rgba(117, 230, 224, .25); }
-    .option-title { font-weight: 800; font-size: .9rem; margin-bottom: 3px; color: var(--text); }
-    .option-desc { font-size: .7rem; color: var(--muted); line-height: 1.35; }
+    .option-card:hover { border-color: var(--cyan); background: #182238; transform: translateY(-2px); }
+    .option-card.selected { border-color: var(--cyan); background: #1c2b48; box-shadow: 0 0 16px rgba(92, 225, 230, .25); }
+    .option-title { font-weight: 800; font-size: .95rem; margin-bottom: 4px; color: var(--text); }
+    .option-desc { font-size: .72rem; color: var(--muted); line-height: 1.4; }
     
-    .hud { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 14px; }
-    .stat { padding: 10px 8px; border: 1px solid var(--line); border-radius: 12px; background: #101725; text-align: center; }
-    .stat-label { color: var(--muted); font-size: .74rem; }
-    .stat-value { margin-top: 4px; font-size: 1.05rem; font-weight: 800; white-space: nowrap; }
-    #health { color: var(--red); letter-spacing: .08em; font-size: .85rem; }
+    .hud { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
+    .stat { padding: 12px 8px; border: 1px solid var(--line); border-radius: 14px; background: #0f1626; text-align: center; }
+    .stat-label { color: var(--muted); font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+    .stat-value { margin-top: 5px; font-size: 1.05rem; font-weight: 900; white-space: nowrap; }
+    #health { color: var(--red); letter-spacing: .06em; font-size: .85rem; }
     #enemy-count { color: var(--gold); }
-    .board-wrap { padding: 8px; border-radius: 13px; background: #080d15; border: 1px solid #263148; }
+    .board-wrap { padding: 10px; border-radius: 16px; background: #070b14; border: 1px solid #202e48; box-shadow: inset 0 2px 8px rgba(0,0,0,.4); }
     #board {
       display: grid;
       grid-template-columns: repeat(15, minmax(0, 1fr));
@@ -107,89 +113,118 @@
       place-items: center;
       min-width: 0;
       aspect-ratio: 1;
-      border-radius: 4px;
+      border-radius: 6px;
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       font-size: clamp(.68rem, 2.6vw, 1.15rem);
       font-weight: 900;
       line-height: 1;
     }
-    .tile.floor { color: #34445d; background: #111a28; }
-    .tile.wall { color: #a3b5cf; background: #29364b; box-shadow: inset 0 0 0 1px #34445b; }
+    .tile.floor { color: #2a3852; background: #0e1524; }
+    .tile.wall { color: #8fa2c2; background: #223049; box-shadow: inset 0 0 0 1px #2f4263; }
     .tile.player {
       color: #07171b;
       background: hsl(var(--rainbow-hue) 95% 65%);
-      box-shadow: 0 0 15px hsl(var(--rainbow-hue) 95% 65% / .55);
+      box-shadow: 0 0 16px hsl(var(--rainbow-hue) 95% 65% / .6);
     }
-    .tile.enemy { color: #291015; background: var(--red); box-shadow: 0 0 12px rgba(255, 123, 133, .25); }
-    .tile.fountain { color: #062436; background: #75dfff; box-shadow: 0 0 14px rgba(117, 223, 255, .5); }
-    .tile.exit { color: #082214; background: var(--green); box-shadow: 0 0 13px rgba(143, 240, 173, .24); }
-    .legend { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px 15px; margin: 13px 0 0; color: var(--muted); font-size: .78rem; }
-    .legend span { white-space: nowrap; }
-    .key { display: inline-grid; place-items: center; min-width: 1.55em; height: 1.55em; margin-right: 4px; border-radius: 4px; color: var(--text); background: #29364b; font-family: ui-monospace, monospace; font-weight: 900; }
+    .tile.enemy { color: #291015; background: var(--red); box-shadow: 0 0 14px rgba(255, 107, 123, .35); }
+    .tile.fountain { color: #062436; background: var(--cyan); box-shadow: 0 0 16px rgba(92, 225, 230, .5); }
+    .tile.exit { color: #082214; background: var(--green); box-shadow: 0 0 15px rgba(74, 222, 128, .35); }
+    .legend { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px 18px; margin: 15px 0 0; color: var(--muted); font-size: .8rem; }
+    .legend span { white-space: nowrap; display: flex; align-items: center; }
+    .key { display: inline-grid; place-items: center; min-width: 1.6em; height: 1.6em; margin-right: 5px; border-radius: 5px; color: var(--text); background: #223049; font-family: ui-monospace, monospace; font-weight: 900; }
     .message {
-      min-height: 54px;
+      min-height: 58px;
       display: flex;
       align-items: center;
-      margin-top: 14px;
-      padding: 12px 14px;
-      border: 1px solid #2a4352;
-      border-radius: 12px;
-      color: #d7f4f2;
-      background: rgba(20, 49, 56, .45);
-      line-height: 1.5;
+      margin-top: 16px;
+      padding: 14px 16px;
+      border: 1px solid #234057;
+      border-radius: 14px;
+      color: #e2f8f7;
+      background: rgba(18, 50, 61, .5);
+      line-height: 1.55;
+      font-size: .93rem;
     }
-    .message[data-kind="danger"] { border-color: #70404a; color: #ffc4c9; background: rgba(70, 25, 35, .38); }
-    .message[data-kind="win"] { border-color: #387451; color: #bdffd0; background: rgba(24, 70, 43, .4); }
-    .message[data-kind="heal"] { border-color: #287b9b; color: #bdefff; background: rgba(18, 75, 99, .38); }
-    .message[data-kind="level"] { border-color: #76613a; color: #ffe4a6; background: rgba(77, 57, 20, .38); }
-    .controls-area { display: grid; grid-template-columns: 1fr; gap: 16px; align-items: center; }
-    .instructions h2, .controls h2 { margin: 0 0 9px; font-size: 1rem; }
-    .instructions p { margin: 6px 0; color: var(--muted); font-size: .9rem; line-height: 1.65; }
+    .message[data-kind="danger"] { border-color: #612c37; color: #ffccd3; background: rgba(61, 22, 30, .45); }
+    .message[data-kind="win"] { border-color: #27593c; color: #bbf7d0; background: rgba(18, 54, 33, .45); }
+    .message[data-kind="heal"] { border-color: #235c6e; color: #cffafe; background: rgba(15, 52, 64, .45); }
+    .message[data-kind="level"] { border-color: #614e24; color: #fef08a; background: rgba(61, 47, 18, .45); }
+    .message[data-kind="reward"] { border-color: #5c471c; color: #fde68a; background: rgba(54, 40, 13, .5); box-shadow: 0 0 15px rgba(255, 202, 66, .15); }
+
+    .controls-area { display: grid; grid-template-columns: 1fr; gap: 18px; align-items: center; }
+    .instructions h2, .controls h2 { margin: 0 0 10px; font-size: 1.05rem; color: var(--text); }
+    .instructions p { margin: 7px 0; color: var(--muted); font-size: .9rem; line-height: 1.65; }
     .instructions strong { color: var(--text); }
-    .dpad { display: grid; grid-template-columns: repeat(3, 58px); grid-template-rows: repeat(2, 52px); justify-content: center; gap: 7px; }
+    
+    /* D-pad & Combat controls */
+    .dpad { display: grid; grid-template-columns: repeat(3, 60px); grid-template-rows: repeat(2, 54px); justify-content: center; gap: 8px; }
+    .combat-controls { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    .action-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 13px;
+      border: 1px solid #384b6d;
+      border-radius: 13px;
+      color: var(--text);
+      background: linear-gradient(180deg, #2b3c58, #182338);
+      box-shadow: 0 4px 0 #0b111c, 0 6px 15px rgba(0,0,0,.2);
+      cursor: pointer;
+      font-weight: 800;
+      font-size: 1rem;
+      transition: transform 0.1s;
+    }
+    .action-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #0b111c; }
+    .action-btn.skill-btn { border-color: #6d4b99; background: linear-gradient(180deg, #462c6b, #25163d); color: #f3e8ff; }
+    .action-btn.flee-btn { border-color: #94713c; background: linear-gradient(180deg, #664d24, #382811); color: #fef3c7; }
+
     .move-btn {
       display: grid;
       place-items: center;
       min-width: 0;
-      border: 1px solid #41536d;
-      border-radius: 13px;
+      border: 1px solid #384b6d;
+      border-radius: 14px;
       color: var(--text);
-      background: linear-gradient(180deg, #29384e, #1a2537);
+      background: linear-gradient(180deg, #2b3c58, #182338);
       box-shadow: 0 4px 0 #0b111c;
       cursor: pointer;
-      font-size: 1.35rem;
+      font-size: 1.4rem;
       font-weight: 900;
       -webkit-tap-highlight-color: transparent;
+      transition: transform 0.1s;
     }
     .move-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #0b111c; }
-    .move-btn:disabled { opacity: .38; cursor: not-allowed; filter: grayscale(.7); box-shadow: none; }
-    .move-btn:focus-visible, .restart:focus-visible { outline: 3px solid var(--cyan); outline-offset: 3px; }
+    .move-btn:disabled { opacity: .35; cursor: not-allowed; filter: grayscale(.7); box-shadow: none; }
     .up { grid-column: 2; grid-row: 1; }
     .left { grid-column: 1; grid-row: 2; }
     .down { grid-column: 2; grid-row: 2; }
     .right { grid-column: 3; grid-row: 2; }
-    .control-foot { margin: 11px 0 0; text-align: center; color: var(--muted); font-size: .77rem; }
+    
     .restart {
       display: block;
       width: 100%;
-      margin-top: 15px;
-      padding: 12px 16px;
-      border: 1px solid #4b637d;
-      border-radius: 11px;
-      color: #eaf5ff;
-      background: #263951;
+      margin-top: 16px;
+      padding: 13px 16px;
+      border: 1px solid #3e5575;
+      border-radius: 13px;
+      color: #f0f7ff;
+      background: #233552;
       font-weight: 800;
       cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,.2);
+      transition: background 0.2s;
     }
-    .restart:hover { background: #314966; }
-    .footnote { margin: 14px 0 0; text-align: center; color: #687994; font-size: .75rem; }
+    .restart:hover { background: #2c4266; }
+    .footnote { margin: 16px 0 0; text-align: center; color: #5a6e91; font-size: .75rem; letter-spacing: .03em; }
     .hidden { display: none !important; }
     @media (min-width: 680px) {
-      body { padding-top: 30px; }
-      .layout { grid-template-columns: minmax(0, 1.2fr) minmax(230px, .8fr); align-items: start; }
-      .controls-area { gap: 21px; }
-      .controls { padding-top: 3px; }
-      .dpad { grid-template-columns: repeat(3, 54px); grid-template-rows: repeat(2, 49px); }
+      body { padding-top: 35px; }
+      .layout { grid-template-columns: minmax(0, 1.25fr) minmax(240px, .75fr); align-items: start; }
+      .controls-area { gap: 24px; }
+      .controls { padding-top: 4px; }
+      .dpad { grid-template-columns: repeat(3, 56px); grid-template-rows: repeat(2, 50px); }
     }
   </style>
 </head>
@@ -198,60 +233,60 @@
     <header>
       <p class="eyebrow">TURN-BASED DUNGEON</p>
       <h1>深窟探險</h1>
-      <p class="subtitle">挑選你的冒險種族與職業，迎戰三層深淵地下城！</p>
+      <p class="subtitle">種族職業養成・戰鬥戰利品・深淵地下城</p>
     </header>
 
     <!-- 角色選擇畫面 -->
     <div id="setup-panel" class="panel setup-screen" aria-label="角色創建">
       <h2>選擇冒險者身分</h2>
       <div class="setup-section">
-        <h3>1. 選擇種族（影響生命上限與天賦）</h3>
+        <h3>1. 選擇種族（影響血量與基礎戰鬥屬性）</h3>
         <div class="options-grid" id="race-options">
           <div class="option-card selected" data-race="human">
             <div class="option-title">人類</div>
-            <div class="option-desc">生命上限 +1（總血量 6）。均衡適應。</div>
+            <div class="option-desc">血量 +1（總血量 6）。能力均衡。</div>
           </div>
           <div class="option-card" data-race="elf">
             <div class="option-title">精靈</div>
-            <div class="option-desc">每層擁有 1 次完全閃避怪物攻擊。</div>
+            <div class="option-desc">敏捷靈動，逃跑成功率顯著提升。</div>
           </div>
           <div class="option-card" data-race="dwarf">
             <div class="option-title">矮人</div>
-            <div class="option-desc">生命上限 +2（總血量 7）。強健體魄。</div>
+            <div class="option-desc">血量 +2（總血量 7），防禦力 +1。</div>
           </div>
           <div class="option-card" data-race="orc">
             <div class="option-title">獸人</div>
-            <div class="option-desc">生命上限 +3（總血量 8）。狂野血脈。</div>
+            <div class="option-desc">血量 +3（總血量 8），攻擊力 +1。</div>
           </div>
           <div class="option-card" data-race="undead">
             <div class="option-title">不死族</div>
-            <div class="option-desc">血量 -1（總血量 4），擁有 1 次原地復活機會。</div>
+            <div class="option-desc">血量 -1，普攻附帶吸血效果。</div>
           </div>
         </div>
       </div>
 
       <div class="setup-section">
-        <h3>2. 選擇職業（決定戰鬥與生存策略）</h3>
+        <h3>2. 選擇職業（決定攻擊力與戰鬥招式）</h3>
         <div class="options-grid" id="class-options">
           <div class="option-card selected" data-class="warrior">
             <div class="option-title">戰士</div>
-            <div class="option-desc">撞擊怪物可直接斬殺（代價扣 1 血）。</div>
+            <div class="option-desc">技能：【烈火重擊】造成 2 倍傷害。</div>
           </div>
           <div class="option-card" data-class="mage">
             <div class="option-title">法師</div>
-            <div class="option-desc">擁有 2 點奧術護盾優先吸收傷害。</div>
+            <div class="option-desc">技能：【奧術火球】無視防禦造成魔法傷害。</div>
           </div>
           <div class="option-card" data-class="rogue">
             <div class="option-title">盜賊</div>
-            <div class="option-desc">移動時 40% 機率潛行不驚動怪物。</div>
+            <div class="option-desc">技能：【致命偷襲】高暴擊率致命一擊。</div>
           </div>
           <div class="option-card" data-class="paladin">
             <div class="option-title">聖騎士</div>
-            <div class="option-desc">擁有 1 點護盾，每 4 回合自動回復 1 血。</div>
+            <div class="option-desc">技能：【聖光審判】攻擊並恢復 1 點生命。</div>
           </div>
           <div class="option-card" data-class="hunter">
             <div class="option-title">獵人</div>
-            <div class="option-desc">鷹眼狙擊，每層開局自動遠距擊殺 1 隻怪物。</div>
+            <div class="option-desc">技能：【弱點狙擊】精準遠距狙殺。</div>
           </div>
         </div>
       </div>
@@ -286,19 +321,31 @@
       <section class="panel controls-area" aria-label="遊戲操作與規則">
         <div class="instructions">
           <h2>冒險守則</h2>
-          <p><strong>移動：</strong>鍵盤 WASD、方向鍵，或下方觸控按鈕。</p>
-          <p><strong>職業天賦：</strong>善用各職業獨特機制在深淵中存活！</p>
-          <p><strong>治療泉水：</strong>踩上 <strong style="color:#75dfff">H</strong> 可恢復滿血及護盾；每層限用一次。</p>
+          <p><strong>移動：</strong>鍵盤 WASD、方向鍵，或觸控方向鍵。</p>
+          <p><strong>戰鬥與戰利品：</strong>擊敗怪物後將隨機掉落<strong>生命藥水</strong>、<strong>力量祝福</strong>或<strong>防禦護甲</strong>！</p>
+          <p><strong>治療泉水：</strong>踩上 <strong style="color:var(--cyan)">H</strong> 恢復滿血；每層限用一次。</p>
           <p><strong>目標：</strong>抵達 <strong style="color:var(--green)">X 出口</strong>進入下一層，第三層出口即獲勝。</p>
         </div>
         <div class="controls">
-          <h2>觸控方向鍵</h2>
-          <div class="dpad" aria-label="觸控方向控制">
-            <button class="move-btn up" type="button" data-dir="up" aria-label="向上移動">▲</button>
-            <button class="move-btn left" type="button" data-dir="left" aria-label="向左移動">◀</button>
-            <button class="move-btn down" type="button" data-dir="down" aria-label="向下移動">▼</button>
-            <button class="move-btn right" type="button" data-dir="right" aria-label="向右移動">▶</button>
+          <!-- 探索時顯示方向鍵 -->
+          <div id="explore-controls">
+            <h2 id="control-title">觸控方向鍵</h2>
+            <div class="dpad" aria-label="觸控方向控制">
+              <button class="move-btn up" type="button" data-dir="up" aria-label="向上移動">▲</button>
+              <button class="move-btn left" type="button" data-dir="left" aria-label="向左移動">◀</button>
+              <button class="move-btn down" type="button" data-dir="down" aria-label="向下移動">▼</button>
+              <button class="move-btn right" type="button" data-dir="right" aria-label="向右移動">▶</button>
+            </div>
           </div>
+
+          <!-- 戰鬥時顯示指令按鈕 -->
+          <div id="combat-controls" class="combat-controls hidden">
+            <h2 id="combat-title">⚔️ 戰鬥回合！</h2>
+            <button class="action-btn" id="btn-attack" type="button">⚔️ 普通攻擊</button>
+            <button class="action-btn skill-btn" id="btn-skill" type="button">✨ 職業招式</button>
+            <button class="action-btn flee-btn" id="btn-flee" type="button">🏃 嘗試逃跑</button>
+          </div>
+
           <button class="restart" id="restart" type="button">↻ 重新選擇身分</button>
         </div>
       </section>
@@ -362,19 +409,19 @@
       ];
 
       const RACES = {
-        human: { name: '人類', code: '人', hpBonus: 1 },
-        elf: { name: '精靈', code: '精', hpBonus: 0, dodge: true },
-        dwarf: { name: '矮人', code: '矮', hpBonus: 2 },
-        orc: { name: '獸人', code: '獸', hpBonus: 3 },
-        undead: { name: '不死族', code: '亡', hpBonus: -1, revive: true }
+        human: { name: '人類', hpBonus: 1, atkBonus: 0, defBonus: 0 },
+        elf: { name: '精靈', hpBonus: 0, atkBonus: 0, defBonus: 0, fleeBonus: 0.25 },
+        dwarf: { name: '矮人', hpBonus: 2, atkBonus: 0, defBonus: 1 },
+        orc: { name: '獸人', hpBonus: 3, atkBonus: 1, defBonus: 0 },
+        undead: { name: '不死族', hpBonus: -1, atkBonus: 0, defBonus: 0, vampirism: true }
       };
 
       const CLASSES = {
-        warrior: { name: '戰士', code: '戰' },
-        mage: { name: '法師', code: '法', shieldMax: 2 },
-        rogue: { name: '盜賊', code: '盜' },
-        paladin: { name: '聖騎士', code: '騎', shieldMax: 1, paladinRegen: true },
-        hunter: { name: '獵人', code: '獵', sniper: true }
+        warrior: { name: '戰士', skillName: '烈火重擊', mult: 2.0 },
+        mage: { name: '法師', skillName: '奧術火球', magic: true, mult: 2.2 },
+        rogue: { name: '盜賊', skillName: '致命偷襲', critMult: 3.0 },
+        paladin: { name: '聖騎士', skillName: '聖光審判', healSelf: 1, mult: 1.5 },
+        hunter: { name: '獵人', skillName: '弱點狙擊', mult: 2.3 }
       };
 
       const DELTAS = {
@@ -395,6 +442,12 @@
       const messageEl = document.getElementById('message');
       const restartBtn = document.getElementById('restart');
       const startBtn = document.getElementById('start-btn');
+      const exploreControls = document.getElementById('explore-controls');
+      const combatControls = document.getElementById('combat-controls');
+      const btnAttack = document.getElementById('btn-attack');
+      const btnSkill = document.getElementById('btn-skill');
+      const btnFlee = document.getElementById('btn-flee');
+      const combatTitle = document.getElementById('combat-title');
 
       // Selection state
       let selectedRaceKey = 'human';
@@ -402,25 +455,30 @@
 
       // Game state variables
       let walls, player, enemies, exit, fountain;
-      let hp, maxHp, shield, turns, currentLevel, gameState;
-      let elfDodgeAvailable = true;
-      let undeadReviveAvailable = true;
+      let hp, maxHp, atk, def, turns, currentLevel, gameState;
+      
+      // Combat state variables
+      let activeEnemyIndex = null;
+      let combatMonsterHp = 0;
+      let combatMonsterMaxHp = 0;
+      let combatMonsterAtk = 1;
 
-      // Card selection listeners
-      document.querySelectorAll('#race-options .option-card').forEach(card => {
-        card.addEventListener('click', () => {
-          document.querySelectorAll('#race-options .option-card').forEach(c => c.classList.remove('selected'));
-          card.classList.add('selected');
-          selectedRaceKey = card.dataset.race;
-        });
+      // Card selection via Event Delegation
+      document.getElementById('race-options').addEventListener('click', (e) => {
+        const card = e.target.closest('.option-card');
+        if (!card) return;
+        document.querySelectorAll('#race-options .option-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        selectedRaceKey = card.dataset.race;
       });
 
-      document.querySelectorAll('#class-options .option-card').forEach(card => {
-        card.addEventListener('click', () => {
-          document.querySelectorAll('#class-options .option-card').forEach(c => c.classList.remove('selected'));
-          card.classList.add('selected');
-          selectedClassKey = card.dataset.class;
-        });
+      document.getElementById('class-options').addEventListener('click', (e) => {
+        const card = e.target.closest('.option-card');
+        if (!card) return;
+        document.querySelectorAll('#class-options .option-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        selectedClassKey = card.dataset.class;
+        btnSkill.textContent = `✨ ${CLASSES[selectedClassKey].skillName}`;
       });
 
       function keyOf(pos) { return `${pos.r},${pos.c}`; }
@@ -454,16 +512,6 @@
             else if (tile === 'H') { fountain = { r, c, used: false }; walls[r][c] = '.'; }
           }
         }
-        if (RACES[selectedRaceKey].dodge) {
-          elfDodgeAvailable = true;
-        }
-
-        // Hunter passive: Sniper kill 1 random enemy on floor start
-        if (CLASSES[selectedClassKey].sniper && enemies.length > 0) {
-          const randomIndex = Math.floor(Math.random() * enemies.length);
-          enemies.splice(randomIndex, 1);
-          setMessage(`🎯 獵人鷹眼狙擊！開局直接遠距消滅了 1 隻怪物！`, 'heal');
-        }
       }
 
       function startGame() {
@@ -475,16 +523,15 @@
 
         maxHp = Math.max(1, 5 + race.hpBonus);
         hp = maxHp;
-        shield = cls.shieldMax ? cls.shieldMax : 0;
+        atk = 2 + race.atkBonus;
+        def = 0 + race.defBonus;
         currentLevel = 0;
         turns = 0;
         gameState = 'playing';
-        undeadReviveAvailable = true;
 
+        btnSkill.textContent = `✨ ${cls.skillName}`;
         loadLevel(currentLevel);
-        if (!CLASSES[selectedClassKey].sniper) {
-          setMessage(`以「${race.name}${cls.name}」身分展開冒險！找到綠色出口 X！`);
-        }
+        setMessage(`以「${race.name}${cls.name}」身分展開冒險！找到綠色出口 X！`);
         render();
       }
 
@@ -517,9 +564,6 @@
         boardEl.replaceChildren(fragment);
 
         let hpText = `${'♥'.repeat(hp)}${'♡'.repeat(maxHp - hp)}`;
-        if (shield > 0) {
-          hpText += ` 🛡️${shield}`;
-        }
         healthEl.textContent = hpText;
         healthEl.setAttribute('aria-label', `生命值 ${hp}/${maxHp}`);
 
@@ -527,9 +571,28 @@
         floorTurnEl.textContent = `${currentLevel + 1}/3 (${turns})`;
         identityDisplayEl.textContent = `${RACES[selectedRaceKey].name}/${CLASSES[selectedClassKey].name}`;
 
+        if (gameState === 'combat') {
+          exploreControls.classList.add('hidden');
+          combatControls.classList.remove('hidden');
+          combatTitle.textContent = `⚔️ 戰鬥中 (ATK:${atk} DEF:${def}) 怪物血量：${combatMonsterHp}/${combatMonsterMaxHp}`;
+        } else {
+          exploreControls.classList.remove('hidden');
+          combatControls.classList.add('hidden');
+        }
+
         document.querySelectorAll('[data-dir]').forEach(button => {
           button.disabled = gameState !== 'playing';
         });
+      }
+
+      function enterCombat(enemyIndex) {
+        gameState = 'combat';
+        activeEnemyIndex = enemyIndex;
+        combatMonsterMaxHp = 3 + currentLevel;
+        combatMonsterHp = combatMonsterMaxHp;
+        combatMonsterAtk = 1 + Math.floor(currentLevel / 2);
+        setMessage(`⚠️ 遭遇地下城怪物！進入戰鬥回合，請選擇你的行動！`, 'danger');
+        render();
       }
 
       function distanceMapFromPlayer() {
@@ -549,58 +612,13 @@
         return distances;
       }
 
-      function takeDamage(amount, msg) {
-        // Elf dodge check
-        if (RACES[selectedRaceKey].dodge && elfDodgeAvailable) {
-          elfDodgeAvailable = false;
-          setMessage(`✨ 精靈身法生效！你靈巧地閃過了怪物的攻擊！`, 'heal');
-          return;
-        }
-
-        // Mage / Paladin shield check
-        if (shield > 0) {
-          shield = Math.max(0, shield - amount);
-          setMessage(`🛡️ 護盾吸收了傷害！剩餘護盾：${shield}`, 'heal');
-          return;
-        }
-
-        hp = Math.max(0, hp - amount);
-
-        // Undead revive check
-        if (hp <= 0 && RACES[selectedRaceKey].revive && undeadReviveAvailable) {
-          undeadReviveAvailable = false;
-          hp = 2;
-          setMessage(`💀 不死族天賦觸發！你從死亡中甦醒，恢復 2 點生命！`, 'heal');
-          return;
-        }
-
-        if (hp <= 0) {
-          gameState = 'lost';
-          setMessage('生命值歸零，冒險結束。請按重新開始或 R 鍵。', 'danger');
-        } else {
-          setMessage(msg, 'danger');
-        }
-      }
-
-      function enemiesTakeTurn(playerAlreadyHit = false, healedThisTurn = false) {
-        // Rogue ability: 40% chance enemies don't move
-        if (selectedClassKey === 'rogue' && Math.random() < 0.40) {
-          setMessage('🥷 盜賊潛行成功！怪物沒有察覺你的動向，本回合未追擊。');
-          return;
-        }
-
-        let playerWasHit = playerAlreadyHit;
-        let enemyHitPlayer = false;
-
+      function enemiesTakeTurn() {
         for (let i = 0; i < enemies.length; i++) {
           const enemy = enemies[i];
           const distance = Math.abs(enemy.r - player.r) + Math.abs(enemy.c - player.c);
           if (distance === 1) {
-            if (!playerWasHit) {
-              enemyHitPlayer = true;
-              playerWasHit = true;
-            }
-            continue;
+            enterCombat(i);
+            return true;
           }
 
           const distances = distanceMapFromPlayer();
@@ -617,14 +635,143 @@
             }
           }
           enemies[i] = { r: best.r, c: best.c };
+
+          if (Math.abs(enemies[i].r - player.r) + Math.abs(enemies[i].c - player.c) === 1) {
+            enterCombat(i);
+            return true;
+          }
+        }
+        return false;
+      }
+
+      function monsterTurnAttack() {
+        if (hp <= 0) return;
+        const damage = Math.max(1, combatMonsterAtk - def);
+        hp = Math.max(0, hp - damage);
+        if (hp <= 0) {
+          gameState = 'lost';
+          setMessage(`怪物反擊，將你擊敗了！冒險結束。`, 'danger');
+        }
+      }
+
+      function resolveCombatVictory() {
+        enemies.splice(activeEnemyIndex, 1);
+        activeEnemyIndex = null;
+        gameState = 'playing';
+
+        const rewardRoll = Math.random();
+        let rewardMsg = '';
+        if (rewardRoll < 0.4) {
+          if (hp < maxHp) {
+            hp = Math.min(maxHp, hp + 1);
+            rewardMsg = `🎁 戰利品掉落：獲得【生命藥水】！恢復 1 點生命值（${hp}/${maxHp}）。`;
+          } else {
+            rewardMsg = `🎁 戰利品掉落：獲得【生命藥水】，但血量已滿，轉化為冒險興奮感！`;
+          }
+        } else if (rewardRoll < 0.75) {
+          atk += 1;
+          rewardMsg = `🎁 戰利品掉落：獲得【力量祝福】！攻擊力永久提升至 ATK:${atk}。`;
+        } else {
+          def += 1;
+          rewardMsg = `🎁 戰利品掉落：獲得【防禦護甲】！防禦力永久提升至 DEF:${def}。`;
+        }
+        
+        if (samePos(player, exit)) {
+          handleExit();
+          return;
         }
 
-        if (enemyHitPlayer) {
-          if (healedThisTurn) {
-            takeDamage(1, `泉水把你治癒，但怪物隨即咬中你！目前生命值 ${hp}/${maxHp}。`);
-          } else {
-            takeDamage(1, `有怪物咬中你！目前生命值 ${hp}/${maxHp}。`);
-          }
+        setMessage(rewardMsg, 'reward');
+        render();
+      }
+
+      function playerAttack() {
+        if (gameState !== 'combat') return;
+        const dmg = Math.max(1, atk);
+        combatMonsterHp -= dmg;
+        let log = `你使出普通攻擊，對怪物造成 ${dmg} 點傷害！`;
+
+        if (RACES[selectedRaceKey].vampirism && hp < maxHp) {
+          hp = Math.min(maxHp, hp + 1);
+          log += `（不死族吸血 +1）`;
+        }
+
+        if (combatMonsterHp <= 0) {
+          resolveCombatVictory();
+          return;
+        }
+
+        monsterTurnAttack();
+        if (gameState === 'lost') { render(); return; }
+        setMessage(`${log} 怪物反擊！目前血量 ${hp}/${maxHp}。`, 'danger');
+        render();
+      }
+
+      function playerSkill() {
+        if (gameState !== 'combat') return;
+        const cls = CLASSES[selectedClassKey];
+        let dmg = Math.round(atk * cls.mult);
+        let log = ``;
+
+        if (cls.magic) {
+          dmg = Math.round(atk * cls.mult);
+          combatMonsterHp -= dmg;
+          log = `🔥 你施展【奧術火球】，無視防禦造成 ${dmg} 點魔法傷害！`;
+        } else if (selectedClassKey === 'rogue') {
+          const isCrit = Math.random() < 0.5;
+          dmg = isCrit ? Math.round(atk * cls.critMult) : Math.round(atk * 1.5);
+          combatMonsterHp -= dmg;
+          log = isCrit ? `💥 暴擊！你使出【致命偷襲】造成 ${dmg} 點傷害！` : `🥷 你使出【致命偷襲】造成 ${dmg} 點傷害！`;
+        } else if (cls.healSelf) {
+          combatMonsterHp -= dmg;
+          hp = Math.min(maxHp, hp + cls.healSelf);
+          log = `✨ 你使出【聖光審判】造成 ${dmg} 點傷害，並恢復 +${cls.healSelf} 血量！`;
+        } else {
+          combatMonsterHp -= dmg;
+          log = `⚔️ 你使出【${cls.skillName}】猛烈斬擊，造成 ${dmg} 點傷害！`;
+        }
+
+        if (RACES[selectedRaceKey].vampirism && hp < maxHp) {
+          hp = Math.min(maxHp, hp + 1);
+        }
+
+        if (combatMonsterHp <= 0) {
+          resolveCombatVictory();
+          return;
+        }
+
+        monsterTurnAttack();
+        if (gameState === 'lost') { render(); return; }
+        setMessage(`${log} 怪物反擊！剩餘血量 ${hp}/${maxHp}。`, 'danger');
+        render();
+      }
+
+      function playerFlee() {
+        if (gameState !== 'combat') return;
+        let fleeChance = 0.5 + (RACES[selectedRaceKey].fleeBonus || 0);
+        if (Math.random() < fleeChance) {
+          gameState = 'playing';
+          activeEnemyIndex = null;
+          setMessage(`🏃 逃跑成功！你順利拉開距離。`, 'heal');
+          render();
+        } else {
+          setMessage(`🏃💨 逃跑失敗！怪物趁機攻擊！`, 'danger');
+          monsterTurnAttack();
+          if (gameState === 'lost') { render(); return; }
+          render();
+        }
+      }
+
+      function handleExit() {
+        if (currentLevel < LEVELS.length - 1) {
+          currentLevel += 1;
+          loadLevel(currentLevel);
+          setMessage(`通過出口！進入${LEVELS[currentLevel].name}：怪物變多、迷宮更難了。`, 'level');
+          render();
+        } else {
+          gameState = 'won';
+          setMessage(`你征服了三層地下城！共用 ${turns} 回合，剩下 ${hp}/${maxHp} 點生命。傳說級冒險家！`, 'win');
+          render();
         }
       }
 
@@ -641,67 +788,41 @@
         const targetEnemy = enemyAt(next);
         turns += 1;
 
-        // Paladin passive regeneration every 4 turns
-        if (CLASSES[selectedClassKey].paladinRegen && turns % 4 === 0 && hp < maxHp) {
-          hp = Math.min(maxHp, hp + 1);
-          setMessage(`✨ 聖騎士神聖祈禱發動：生命值自動回復 1 點！`, 'heal');
-        }
-
         if (targetEnemy !== -1) {
-          // Warrior Class special ability: Kill enemy on collision at the cost of 1 HP/Shield
-          if (selectedClassKey === 'warrior') {
-            enemies.splice(targetEnemy, 1);
-            takeDamage(1, `⚔️ 戰士發動斬擊！你消滅了怪物，但也付出了代價！`);
-            if (gameState === 'lost') { render(); return; }
-            enemiesTakeTurn(true);
-            render();
-            return;
-          }
-
-          takeDamage(1, `你撞上怪物！怪物仍擋在前方。`);
-          if (gameState === 'lost') { render(); return; }
-          enemiesTakeTurn(true);
-          render();
+          enterCombat(targetEnemy);
           return;
         }
 
         player = next;
-        let healedThisTurn = false;
-        const maxShield = CLASSES[selectedClassKey].shieldMax || 0;
         if (fountain && !fountain.used && samePos(player, fountain)) {
-          if (hp < maxHp || (maxShield && shield < maxShield)) {
+          if (hp < maxHp) {
             hp = maxHp;
-            if (maxShield) shield = maxShield;
             fountain.used = true;
-            healedThisTurn = true;
-            setMessage(`咕嚕咕嚕！治療泉水將生命與護盾完全恢復！本層泉水已用完。`, 'heal');
+            setMessage(`咕嚕咕嚕！治療泉水將生命完全恢復！本層泉水已用完。`, 'heal');
           } else {
-            setMessage('你找到治療泉水，但狀態已全滿！泉水保留。', 'heal');
+            setMessage('你找到治療泉水，但血量已滿！泉水保留。', 'heal');
           }
         } else {
           setMessage('你小心翼翼地前進……');
         }
 
         if (samePos(player, exit)) {
-          if (currentLevel < LEVELS.length - 1) {
-            currentLevel += 1;
-            loadLevel(currentLevel);
-            setMessage(`通過出口！進入${LEVELS[currentLevel].name}：怪物變多、迷宮更難了。`, 'level');
-            render();
-            return;
-          }
-          gameState = 'won';
-          setMessage(`你征服了三層地下城！共用 ${turns} 回合，剩下 ${hp}/${maxHp} 點生命。傳說級冒險家！`, 'win');
-          render();
+          handleExit();
           return;
         }
 
-        enemiesTakeTurn(false, healedThisTurn);
+        const combatTriggered = enemiesTakeTurn();
+        if (combatTriggered) return;
+
         render();
       }
 
+      // Event Listeners
       startBtn.addEventListener('click', startGame);
       restartBtn.addEventListener('click', returnToSetup);
+      btnAttack.addEventListener('click', playerAttack);
+      btnSkill.addEventListener('click', playerSkill);
+      btnFlee.addEventListener('click', playerFlee);
 
       document.querySelectorAll('[data-dir]').forEach(button => {
         button.addEventListener('click', () => move(button.dataset.dir));
