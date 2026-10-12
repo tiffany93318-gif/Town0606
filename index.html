@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#101522">
-  <title>深窟探險｜三層回合制地下城</title>
+  <title>深窟探險｜三層回合制地下城（進階職業種族版）</title>
   <style>
     @property --rainbow-hue {
       syntax: "<angle>";
@@ -23,6 +23,7 @@
       --red: #ff7b85;
       --gold: #ffd47a;
       --green: #8ff0ad;
+      --purple: #b19cd9;
     }
     * { box-sizing: border-box; }
     html { min-height: 100%; background: var(--bg); }
@@ -36,7 +37,7 @@
     }
     button { font: inherit; touch-action: manipulation; }
     .app {
-      width: min(100%, 760px);
+      width: min(100%, 820px);
       margin: 0 auto;
       --rainbow-hue: 0deg;
       animation: rainbow-cycle 3.2s linear infinite;
@@ -65,11 +66,31 @@
       background: linear-gradient(145deg, rgba(25, 34, 51, .97), rgba(16, 22, 34, .98));
       box-shadow: 0 18px 50px rgba(0, 0, 0, .22);
     }
+    
+    /* Setup Screen Styles */
+    .setup-screen h2 { margin-top: 0; font-size: 1.25rem; color: var(--cyan); }
+    .setup-section { margin-bottom: 16px; }
+    .setup-section h3 { font-size: .95rem; margin: 0 0 8px; color: var(--muted); }
+    .options-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+    .option-card {
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #101725;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s;
+    }
+    .option-card:hover { border-color: var(--cyan); background: #1a263a; }
+    .option-card.selected { border-color: var(--cyan); background: #1e3048; box-shadow: 0 0 12px rgba(117, 230, 224, .25); }
+    .option-title { font-weight: 800; font-size: .9rem; margin-bottom: 3px; color: var(--text); }
+    .option-desc { font-size: .7rem; color: var(--muted); line-height: 1.35; }
+    
     .hud { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 14px; }
     .stat { padding: 10px 8px; border: 1px solid var(--line); border-radius: 12px; background: #101725; text-align: center; }
     .stat-label { color: var(--muted); font-size: .74rem; }
     .stat-value { margin-top: 4px; font-size: 1.05rem; font-weight: 800; white-space: nowrap; }
-    #health { color: var(--red); letter-spacing: .08em; }
+    #health { color: var(--red); letter-spacing: .08em; font-size: .85rem; }
     #enemy-count { color: var(--gold); }
     .board-wrap { padding: 8px; border-radius: 13px; background: #080d15; border: 1px solid #263148; }
     #board {
@@ -96,7 +117,6 @@
     .tile.wall { color: #a3b5cf; background: #29364b; box-shadow: inset 0 0 0 1px #34445b; }
     .tile.player {
       color: #07171b;
-      background: #ff4d6d;
       background: hsl(var(--rainbow-hue) 95% 65%);
       box-shadow: 0 0 15px hsl(var(--rainbow-hue) 95% 65% / .55);
     }
@@ -163,28 +183,13 @@
     }
     .restart:hover { background: #314966; }
     .footnote { margin: 14px 0 0; text-align: center; color: #687994; font-size: .75rem; }
+    .hidden { display: none !important; }
     @media (min-width: 680px) {
       body { padding-top: 30px; }
       .layout { grid-template-columns: minmax(0, 1.2fr) minmax(230px, .8fr); align-items: start; }
       .controls-area { gap: 21px; }
       .controls { padding-top: 3px; }
       .dpad { grid-template-columns: repeat(3, 54px); grid-template-rows: repeat(2, 49px); }
-    }
-    @media (max-width: 380px) {
-      body { padding-inline: 9px; }
-      .panel { padding: 11px; }
-      .board-wrap { padding: 5px; }
-      .legend { gap: 7px 10px; }
-      .hud { gap: 4px; }
-      .stat { padding: 8px 3px; }
-      .stat-label { font-size: .66rem; }
-      .stat-value { font-size: .78rem; }
-      #health { font-size: .67rem; letter-spacing: 0; }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
-      .app { animation: none; --rainbow-hue: 180deg; }
-      .tile.player { background: var(--cyan); box-shadow: 0 0 13px rgba(117, 230, 224, .4); }
     }
   </style>
 </head>
@@ -193,16 +198,75 @@
     <header>
       <p class="eyebrow">TURN-BASED DUNGEON</p>
       <h1>深窟探險</h1>
-      <p class="subtitle">闖過三層地下城、喝泉水續命，別讓怪物把你當宵夜。</p>
+      <p class="subtitle">挑選你的冒險種族與職業，迎戰三層深淵地下城！</p>
     </header>
 
-    <div class="layout">
+    <!-- 角色選擇畫面 -->
+    <div id="setup-panel" class="panel setup-screen" aria-label="角色創建">
+      <h2>選擇冒險者身分</h2>
+      <div class="setup-section">
+        <h3>1. 選擇種族（影響生命上限與天賦）</h3>
+        <div class="options-grid" id="race-options">
+          <div class="option-card selected" data-race="human">
+            <div class="option-title">人類</div>
+            <div class="option-desc">生命上限 +1（總血量 6）。均衡適應。</div>
+          </div>
+          <div class="option-card" data-race="elf">
+            <div class="option-title">精靈</div>
+            <div class="option-desc">每層擁有 1 次完全閃避怪物攻擊。</div>
+          </div>
+          <div class="option-card" data-race="dwarf">
+            <div class="option-title">矮人</div>
+            <div class="option-desc">生命上限 +2（總血量 7）。強健體魄。</div>
+          </div>
+          <div class="option-card" data-race="orc">
+            <div class="option-title">獸人</div>
+            <div class="option-desc">生命上限 +3（總血量 8）。狂野血脈。</div>
+          </div>
+          <div class="option-card" data-race="undead">
+            <div class="option-title">不死族</div>
+            <div class="option-desc">血量 -1（總血量 4），擁有 1 次原地復活機會。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="setup-section">
+        <h3>2. 選擇職業（決定戰鬥與生存策略）</h3>
+        <div class="options-grid" id="class-options">
+          <div class="option-card selected" data-class="warrior">
+            <div class="option-title">戰士</div>
+            <div class="option-desc">撞擊怪物可直接斬殺（代價扣 1 血）。</div>
+          </div>
+          <div class="option-card" data-class="mage">
+            <div class="option-title">法師</div>
+            <div class="option-desc">擁有 2 點奧術護盾優先吸收傷害。</div>
+          </div>
+          <div class="option-card" data-class="rogue">
+            <div class="option-title">盜賊</div>
+            <div class="option-desc">移動時 40% 機率潛行不驚動怪物。</div>
+          </div>
+          <div class="option-card" data-class="paladin">
+            <div class="option-title">聖騎士</div>
+            <div class="option-desc">擁有 1 點護盾，每 4 回合自動回復 1 血。</div>
+          </div>
+          <div class="option-card" data-class="hunter">
+            <div class="option-title">獵人</div>
+            <div class="option-desc">鷹眼狙擊，每層開局自動遠距擊殺 1 隻怪物。</div>
+          </div>
+        </div>
+      </div>
+
+      <button class="restart" id="start-btn" type="button">⚔️ 開始深窟探險</button>
+    </div>
+
+    <!-- 遊戲進行主畫面 -->
+    <div id="game-panel" class="layout hidden">
       <section class="panel" aria-label="地下城遊戲區">
         <div class="hud" aria-live="polite">
-          <div class="stat"><div class="stat-label">樓層</div><div class="stat-value" id="floor-count">1 / 3</div></div>
+          <div class="stat"><div class="stat-label">身分</div><div class="stat-value" id="identity-display" style="font-size:.75rem;">人/戰</div></div>
           <div class="stat"><div class="stat-label">生命值</div><div class="stat-value" id="health">♥ ♥ ♥ ♥ ♥</div></div>
           <div class="stat"><div class="stat-label">剩餘怪物</div><div class="stat-value" id="enemy-count">3</div></div>
-          <div class="stat"><div class="stat-label">回合</div><div class="stat-value" id="turn-count">0</div></div>
+          <div class="stat"><div class="stat-label">樓層/回合</div><div class="stat-value" id="floor-turn">1/3 (0)</div></div>
         </div>
 
         <div class="board-wrap">
@@ -216,17 +280,16 @@
           <span><b class="key">X</b>出口</span>
           <span><b class="key">·</b>地板</span>
         </div>
-        <div id="message" class="message" role="status" aria-live="polite">你醒在地下城深處。找出綠色出口 X！</div>
+        <div id="message" class="message" role="status" aria-live="polite">準備開始冒險！</div>
       </section>
 
       <section class="panel controls-area" aria-label="遊戲操作與規則">
         <div class="instructions">
           <h2>冒險守則</h2>
           <p><strong>移動：</strong>鍵盤 WASD、方向鍵，或下方觸控按鈕。</p>
-          <p><strong>牆壁：</strong>撞牆不會移動，也不會消耗回合。</p>
-          <p><strong>怪物：</strong>撞上怪物會損失 1 點生命，怪物不會因此消失；怪物每回合會追來，貼近時也可能攻擊。</p>
-          <p><strong>治療泉水：</strong>踩上藍色 <strong style="color:#75dfff">H</strong> 可恢復至滿血（最多 5 點）；每層限用一次，滿血時不會消耗。</p>
-          <p><strong>目標：</strong>抵達 <strong style="color:var(--green)">X 出口</strong>進入下一層，第三層出口即獲勝。每層怪物更多、迷宮更棘手。生命歸零後只能重新開始；按 <strong>R</strong> 也能重開。</p>
+          <p><strong>職業天賦：</strong>善用各職業獨特機制在深淵中存活！</p>
+          <p><strong>治療泉水：</strong>踩上 <strong style="color:#75dfff">H</strong> 可恢復滿血及護盾；每層限用一次。</p>
+          <p><strong>目標：</strong>抵達 <strong style="color:var(--green)">X 出口</strong>進入下一層，第三層出口即獲勝。</p>
         </div>
         <div class="controls">
           <h2>觸控方向鍵</h2>
@@ -236,8 +299,7 @@
             <button class="move-btn down" type="button" data-dir="down" aria-label="向下移動">▼</button>
             <button class="move-btn right" type="button" data-dir="right" aria-label="向右移動">▶</button>
           </div>
-          <p class="control-foot">小撇步：別跟怪物硬碰硬，留意藍色 H，泉水可是冒險家的續命外掛。</p>
-          <button class="restart" id="restart" type="button">↻ 重新開始</button>
+          <button class="restart" id="restart" type="button">↻ 重新選擇身分</button>
         </div>
       </section>
     </div>
@@ -248,8 +310,6 @@
     (() => {
       'use strict';
 
-      // 每層都是 15 × 11 的文字地圖：# 牆、@ 起點、E 怪物、H 治療泉水、X 出口、. 地板。
-      // 後續樓層增加怪物數量，也增加牆壁阻隔，難度逐層提升。
       const LEVELS = [
         {
           name: '第一層',
@@ -291,7 +351,7 @@
             '#.###.###.###.#',
             '#...E.........#',
             '#.###...####..#',
-            '#..E..H..E....#',
+            '#..##H...E....#',
             '#..##.##.##...#',
             '#....E........#',
             '#.#####...###.#',
@@ -300,30 +360,68 @@
           ]
         }
       ];
-      const MAX_HP = 5;
+
+      const RACES = {
+        human: { name: '人類', code: '人', hpBonus: 1 },
+        elf: { name: '精靈', code: '精', hpBonus: 0, dodge: true },
+        dwarf: { name: '矮人', code: '矮', hpBonus: 2 },
+        orc: { name: '獸人', code: '獸', hpBonus: 3 },
+        undead: { name: '不死族', code: '亡', hpBonus: -1, revive: true }
+      };
+
+      const CLASSES = {
+        warrior: { name: '戰士', code: '戰' },
+        mage: { name: '法師', code: '法', shieldMax: 2 },
+        rogue: { name: '盜賊', code: '盜' },
+        paladin: { name: '聖騎士', code: '騎', shieldMax: 1, paladinRegen: true },
+        hunter: { name: '獵人', code: '獵', sniper: true }
+      };
+
       const DELTAS = {
         up: { r: -1, c: 0 },
         down: { r: 1, c: 0 },
         left: { r: 0, c: -1 },
         right: { r: 0, c: 1 }
       };
+
+      // UI Elements
+      const setupPanel = document.getElementById('setup-panel');
+      const gamePanel = document.getElementById('game-panel');
       const boardEl = document.getElementById('board');
       const healthEl = document.getElementById('health');
       const enemyCountEl = document.getElementById('enemy-count');
-      const turnCountEl = document.getElementById('turn-count');
-      const floorCountEl = document.getElementById('floor-count');
+      const floorTurnEl = document.getElementById('floor-turn');
+      const identityDisplayEl = document.getElementById('identity-display');
       const messageEl = document.getElementById('message');
       const restartBtn = document.getElementById('restart');
+      const startBtn = document.getElementById('start-btn');
 
-      let walls;
-      let player;
-      let enemies;
-      let exit;
-      let fountain;
-      let hp;
-      let turns;
-      let currentLevel;
-      let gameState;
+      // Selection state
+      let selectedRaceKey = 'human';
+      let selectedClassKey = 'warrior';
+
+      // Game state variables
+      let walls, player, enemies, exit, fountain;
+      let hp, maxHp, shield, turns, currentLevel, gameState;
+      let elfDodgeAvailable = true;
+      let undeadReviveAvailable = true;
+
+      // Card selection listeners
+      document.querySelectorAll('#race-options .option-card').forEach(card => {
+        card.addEventListener('click', () => {
+          document.querySelectorAll('#race-options .option-card').forEach(c => c.classList.remove('selected'));
+          card.classList.add('selected');
+          selectedRaceKey = card.dataset.race;
+        });
+      });
+
+      document.querySelectorAll('#class-options .option-card').forEach(card => {
+        card.addEventListener('click', () => {
+          document.querySelectorAll('#class-options .option-card').forEach(c => c.classList.remove('selected'));
+          card.classList.add('selected');
+          selectedClassKey = card.dataset.class;
+        });
+      });
 
       function keyOf(pos) { return `${pos.r},${pos.c}`; }
       function samePos(a, b) { return Boolean(a && b && a.r === b.r && a.c === b.c); }
@@ -356,16 +454,43 @@
             else if (tile === 'H') { fountain = { r, c, used: false }; walls[r][c] = '.'; }
           }
         }
+        if (RACES[selectedRaceKey].dodge) {
+          elfDodgeAvailable = true;
+        }
+
+        // Hunter passive: Sniper kill 1 random enemy on floor start
+        if (CLASSES[selectedClassKey].sniper && enemies.length > 0) {
+          const randomIndex = Math.floor(Math.random() * enemies.length);
+          enemies.splice(randomIndex, 1);
+          setMessage(`🎯 獵人鷹眼狙擊！開局直接遠距消滅了 1 隻怪物！`, 'heal');
+        }
       }
 
-      function restartGame() {
+      function startGame() {
+        setupPanel.classList.add('hidden');
+        gamePanel.classList.remove('hidden');
+
+        const race = RACES[selectedRaceKey];
+        const cls = CLASSES[selectedClassKey];
+
+        maxHp = Math.max(1, 5 + race.hpBonus);
+        hp = maxHp;
+        shield = cls.shieldMax ? cls.shieldMax : 0;
         currentLevel = 0;
-        hp = MAX_HP;
         turns = 0;
         gameState = 'playing';
+        undeadReviveAvailable = true;
+
         loadLevel(currentLevel);
-        setMessage('第一層開始！找到 X 前往下一層；藍色 H 可以恢復滿血。');
+        if (!CLASSES[selectedClassKey].sniper) {
+          setMessage(`以「${race.name}${cls.name}」身分展開冒險！找到綠色出口 X！`);
+        }
         render();
+      }
+
+      function returnToSetup() {
+        gamePanel.classList.add('hidden');
+        setupPanel.classList.remove('hidden');
       }
 
       function render() {
@@ -384,23 +509,29 @@
             tile.className = `tile ${type}`;
             tile.textContent = symbol;
             tile.setAttribute('role', 'gridcell');
-            const labels = { '#': '牆壁', '@': '彩虹玩家', E: '怪物', H: '治療泉水', X: '出口', '·': '地板' };
+            const labels = { '#': '牆壁', '@': '玩家', E: '怪物', H: '治療泉水', X: '出口', '·': '地板' };
             tile.setAttribute('aria-label', labels[symbol]);
             fragment.appendChild(tile);
           }
         }
         boardEl.replaceChildren(fragment);
-        healthEl.textContent = `${'♥'.repeat(hp)}${'♡'.repeat(MAX_HP - hp)}`;
-        healthEl.setAttribute('aria-label', `生命值 ${hp}/${MAX_HP}`);
+
+        let hpText = `${'♥'.repeat(hp)}${'♡'.repeat(maxHp - hp)}`;
+        if (shield > 0) {
+          hpText += ` 🛡️${shield}`;
+        }
+        healthEl.textContent = hpText;
+        healthEl.setAttribute('aria-label', `生命值 ${hp}/${maxHp}`);
+
         enemyCountEl.textContent = String(enemies.length);
-        turnCountEl.textContent = String(turns);
-        floorCountEl.textContent = `${currentLevel + 1} / ${LEVELS.length}`;
+        floorTurnEl.textContent = `${currentLevel + 1}/3 (${turns})`;
+        identityDisplayEl.textContent = `${RACES[selectedRaceKey].name}/${CLASSES[selectedClassKey].name}`;
+
         document.querySelectorAll('[data-dir]').forEach(button => {
           button.disabled = gameState !== 'playing';
         });
       }
 
-      // 從玩家位置做 BFS，讓怪物沿著通道追蹤，不會穿牆。
       function distanceMapFromPlayer() {
         const distances = Array.from({ length: walls.length }, () => Array(walls[0].length).fill(Infinity));
         const queue = [player];
@@ -418,17 +549,56 @@
         return distances;
       }
 
+      function takeDamage(amount, msg) {
+        // Elf dodge check
+        if (RACES[selectedRaceKey].dodge && elfDodgeAvailable) {
+          elfDodgeAvailable = false;
+          setMessage(`✨ 精靈身法生效！你靈巧地閃過了怪物的攻擊！`, 'heal');
+          return;
+        }
+
+        // Mage / Paladin shield check
+        if (shield > 0) {
+          shield = Math.max(0, shield - amount);
+          setMessage(`🛡️ 護盾吸收了傷害！剩餘護盾：${shield}`, 'heal');
+          return;
+        }
+
+        hp = Math.max(0, hp - amount);
+
+        // Undead revive check
+        if (hp <= 0 && RACES[selectedRaceKey].revive && undeadReviveAvailable) {
+          undeadReviveAvailable = false;
+          hp = 2;
+          setMessage(`💀 不死族天賦觸發！你從死亡中甦醒，恢復 2 點生命！`, 'heal');
+          return;
+        }
+
+        if (hp <= 0) {
+          gameState = 'lost';
+          setMessage('生命值歸零，冒險結束。請按重新開始或 R 鍵。', 'danger');
+        } else {
+          setMessage(msg, 'danger');
+        }
+      }
+
       function enemiesTakeTurn(playerAlreadyHit = false, healedThisTurn = false) {
+        // Rogue ability: 40% chance enemies don't move
+        if (selectedClassKey === 'rogue' && Math.random() < 0.40) {
+          setMessage('🥷 盜賊潛行成功！怪物沒有察覺你的動向，本回合未追擊。');
+          return;
+        }
+
         let playerWasHit = playerAlreadyHit;
         let enemyHitPlayer = false;
+
         for (let i = 0; i < enemies.length; i++) {
           const enemy = enemies[i];
           const distance = Math.abs(enemy.r - player.r) + Math.abs(enemy.c - player.c);
           if (distance === 1) {
             if (!playerWasHit) {
-              hp = Math.max(0, hp - 1);
-              playerWasHit = true;
               enemyHitPlayer = true;
+              playerWasHit = true;
             }
             continue;
           }
@@ -448,13 +618,12 @@
           }
           enemies[i] = { r: best.r, c: best.c };
         }
+
         if (enemyHitPlayer) {
-          if (hp <= 0) {
-            setMessage('怪物撲了上來！生命值歸零，冒險結束。現在只能按「重新開始」或鍵盤 R。', 'danger');
-          } else if (healedThisTurn) {
-            setMessage(`泉水把你治癒至滿血，但怪物隨即咬中你！目前生命值 ${hp}/${MAX_HP}。`, 'danger');
+          if (healedThisTurn) {
+            takeDamage(1, `泉水把你治癒，但怪物隨即咬中你！目前生命值 ${hp}/${maxHp}。`);
           } else {
-            setMessage(`有怪物咬中你！生命值 -1，目前 ${hp}/${MAX_HP}。快想辦法拉開距離！`, 'danger');
+            takeDamage(1, `有怪物咬中你！目前生命值 ${hp}/${maxHp}。`);
           }
         }
       }
@@ -472,32 +641,42 @@
         const targetEnemy = enemyAt(next);
         turns += 1;
 
+        // Paladin passive regeneration every 4 turns
+        if (CLASSES[selectedClassKey].paladinRegen && turns % 4 === 0 && hp < maxHp) {
+          hp = Math.min(maxHp, hp + 1);
+          setMessage(`✨ 聖騎士神聖祈禱發動：生命值自動回復 1 點！`, 'heal');
+        }
+
         if (targetEnemy !== -1) {
-          // 撞上怪物只會扣 HP；不穿過、不消滅怪物。
-          hp = Math.max(0, hp - 1);
-          if (hp <= 0) {
-            gameState = 'lost';
-            setMessage('你撞上怪物，生命值歸零！冒險結束，現在只能重新開始。', 'danger');
+          // Warrior Class special ability: Kill enemy on collision at the cost of 1 HP/Shield
+          if (selectedClassKey === 'warrior') {
+            enemies.splice(targetEnemy, 1);
+            takeDamage(1, `⚔️ 戰士發動斬擊！你消滅了怪物，但也付出了代價！`);
+            if (gameState === 'lost') { render(); return; }
+            enemiesTakeTurn(true);
             render();
             return;
           }
-          setMessage(`你撞上怪物！生命值 -1（${hp}/${MAX_HP}），怪物仍擋在前方。`, 'danger');
+
+          takeDamage(1, `你撞上怪物！怪物仍擋在前方。`);
+          if (gameState === 'lost') { render(); return; }
           enemiesTakeTurn(true);
-          if (hp <= 0) gameState = 'lost';
           render();
           return;
         }
 
         player = next;
         let healedThisTurn = false;
+        const maxShield = CLASSES[selectedClassKey].shieldMax || 0;
         if (fountain && !fountain.used && samePos(player, fountain)) {
-          if (hp < MAX_HP) {
-            hp = MAX_HP;
+          if (hp < maxHp || (maxShield && shield < maxShield)) {
+            hp = maxHp;
+            if (maxShield) shield = maxShield;
             fountain.used = true;
             healedThisTurn = true;
-            setMessage(`咕嚕咕嚕！治療泉水讓生命值恢復至滿血 ${MAX_HP}/${MAX_HP}。本層泉水已用完。`, 'heal');
+            setMessage(`咕嚕咕嚕！治療泉水將生命與護盾完全恢復！本層泉水已用完。`, 'heal');
           } else {
-            setMessage('你找到治療泉水，但生命值已滿！泉水保留，受傷後還能回來使用。', 'heal');
+            setMessage('你找到治療泉水，但狀態已全滿！泉水保留。', 'heal');
           }
         } else {
           setMessage('你小心翼翼地前進……');
@@ -507,28 +686,29 @@
           if (currentLevel < LEVELS.length - 1) {
             currentLevel += 1;
             loadLevel(currentLevel);
-            setMessage(`通過出口！進入${LEVELS[currentLevel].name}：怪物變多、迷宮更難了。保住剩餘生命！`, 'level');
+            setMessage(`通過出口！進入${LEVELS[currentLevel].name}：怪物變多、迷宮更難了。`, 'level');
             render();
             return;
           }
           gameState = 'won';
-          setMessage(`你征服了三層地下城！共用 ${turns} 回合，剩下 ${hp}/${MAX_HP} 點生命。傳說級冒險家就是你！`, 'win');
+          setMessage(`你征服了三層地下城！共用 ${turns} 回合，剩下 ${hp}/${maxHp} 點生命。傳說級冒險家！`, 'win');
           render();
           return;
         }
 
         enemiesTakeTurn(false, healedThisTurn);
-        if (hp <= 0) gameState = 'lost';
         render();
       }
+
+      startBtn.addEventListener('click', startGame);
+      restartBtn.addEventListener('click', returnToSetup);
 
       document.querySelectorAll('[data-dir]').forEach(button => {
         button.addEventListener('click', () => move(button.dataset.dir));
       });
-      restartBtn.addEventListener('click', restartGame);
 
       document.addEventListener('keydown', event => {
-        if (event.altKey || event.ctrlKey || event.metaKey) return;
+        if (gameState !== 'playing' || event.altKey || event.ctrlKey || event.metaKey) return;
         const key = event.key.toLowerCase();
         const directions = {
           w: 'up', arrowup: 'up',
@@ -539,12 +719,8 @@
         if (directions[key]) {
           event.preventDefault();
           move(directions[key]);
-        } else if (key === 'r') {
-          restartGame();
         }
       });
-
-      restartGame();
     })();
   </script>
 </body>
